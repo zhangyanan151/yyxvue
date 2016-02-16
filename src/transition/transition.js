@@ -101,6 +101,7 @@ p.enter = function (op, cb) {
   this.callHook('beforeEnter')
   this.cb = cb
   addClass(this.el, this.enterClass)
+  addClass(this.el, this.enterClass + '-active')
   op()
   this.entered = false
   this.callHookWithCb('enter')
@@ -157,6 +158,7 @@ p.enterDone = function () {
   this.entered = true
   this.cancel = this.pendingJsCb = null
   removeClass(this.el, this.enterClass)
+  removeClass(this.el, this.enterClass + '-active')
   this.callHook('afterEnter')
   if (this.cb) this.cb()
 }
@@ -188,6 +190,7 @@ p.leave = function (op, cb) {
   this.op = op
   this.cb = cb
   addClass(this.el, this.leaveClass)
+  addClass(this.el, this.leaveClass + '-active')
   this.left = false
   this.callHookWithCb('leave')
   if (this.left) {
@@ -235,6 +238,7 @@ p.leaveDone = function () {
   this.cancel = this.pendingJsCb = null
   this.op()
   removeClass(this.el, this.leaveClass)
+  removeClass(this.el, this.leaveClass + '-active')
   this.callHook('afterLeave')
   if (this.cb) this.cb()
   this.op = null
@@ -261,6 +265,8 @@ p.cancelPending = function () {
   if (hasPending) {
     removeClass(this.el, this.enterClass)
     removeClass(this.el, this.leaveClass)
+    removeClass(this.el, this.enterClass + '-active')
+    removeClass(this.el, this.leaveClass + '-active')
   }
   if (this.cancel) {
     this.cancel.call(this.vm, this.el)
