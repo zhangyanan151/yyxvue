@@ -411,10 +411,10 @@ const vFor = {
       var moving = node._pendingMoveCb
       var type
       if (!moving) {
-        // sniff whether element has a transition duration
+        // sniff whether element has a transition duration for transform
         // with the move class applied
         addClass(node, moveClass)
-        type = transition.getCssTransitionType(moveClass)
+        type = transition.getCssTransitionType(moveClass, true)
         removeClass(node, moveClass)
       }
       if (moving || type === TYPE_TRANSITION) {

@@ -15,8 +15,8 @@ import {
 
 export const TYPE_TRANSITION = 'transition'
 export const TYPE_ANIMATION = 'animation'
-export const transDurationProp = transitionProp + 'Duration'
-export const animDurationProp = animationProp + 'Duration'
+const transDurationProp = transitionProp + 'Duration'
+const animDurationProp = animationProp + 'Duration'
 
 /**
  * A Transition object that encapsulates the state and logic
@@ -306,10 +306,11 @@ p.callHookWithCb = function (type) {
  * calculated styles.
  *
  * @param {String} className
- * @return {Number}
+ * @param {Boolean} expectTransform
+ * @return {String}
  */
 
-p.getCssTransitionType = function (className) {
+p.getCssTransitionType = function (className, expectTransform) {
   /* istanbul ignore if */
   if (
     !transitionEndEvent ||
@@ -330,6 +331,15 @@ p.getCssTransitionType = function (className) {
   if (type) return type
   var inlineStyles = this.el.style
   var computedStyles = window.getComputedStyle(this.el)
+
+  // check if `transform` is among the transitioned properties
+  if (expectTransform) {
+    var transitionProperties = computedStyles[transitionProp + 'Property']
+    if (!/\btransform(,|$)/.test(transitionProperties)) {
+      return
+    }
+  }
+
   var transDuration =
     inlineStyles[transDurationProp] ||
     computedStyles[transDurationProp]
