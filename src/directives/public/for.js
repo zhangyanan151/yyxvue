@@ -1,5 +1,7 @@
 import FragmentFactory from '../../fragment/factory'
 import { FOR } from '../priorities'
+import { queueReflow } from '../../transition/queue'
+import { TYPE_TRANSITION } from '../../transition/transition'
 import {
   isObject,
   warn,
@@ -14,7 +16,12 @@ import {
   def,
   cancellable,
   isArray,
-  isPlainObject
+  isPlainObject,
+  transitionEndEvent,
+  addClass,
+  removeClass,
+  on,
+  off
 } from '../../util/index'
 
 let uid = 0
@@ -117,6 +124,9 @@ const vFor = {
     var init = !oldFrags
     var i, l, frag, key, value, primitive
 
+    // check if move transitions can be applied
+    var needMoveTransition = this.prepareMoveTransition(oldFrags)
+
     // First pass, go through the new Array and fill up
     // the new frags array. If a piece of data has a cached
     // instance for it, we reuse it. Otherwise build a new
@@ -201,7 +211,10 @@ const vFor = {
             findPrevFrag(currentPrev, start, this.id) !== targetPrev
           )
         ) {
+          frag.moved = true
           this.move(frag, prevEl)
+        } else {
+          frag.moved = false
         }
       } else {
         // new instance, or still in stagger.
@@ -209,6 +222,10 @@ const vFor = {
         this.insert(frag, insertionIndex++, prevEl, inDocument)
       }
       frag.reused = frag.fresh = false
+    }
+
+    if (needMoveTransition) {
+      this.applyMoveTransition(frags)
     }
   },
 
@@ -373,6 +390,96 @@ const vFor = {
       this.end.parentNode.appendChild(this.end)
     }
     frag.before(prevEl.nextSibling, false)
+  },
+
+  /**
+   * Check if move transitions are needed, and if so,
+   * record the bounding client rects for each item.
+   *
+   * @param {Array<Fragment>|undefined} frags
+   * @return {Boolean|undefined}
+   */
+
+  prepareMoveTransition: function (frags) {
+    var transition =
+      transitionEndEvent && // css transition supported?
+      frags && frags.length && // has frags to be moved?
+      frags[0].node.__v_trans // has transitions?
+    if (transition) {
+      var node = frags[0].node
+      var moveClass = transition.moveClass
+      var moving = node._pendingMoveCb
+      var type
+      if (!moving) {
+        // sniff whether element has a transition duration
+        // with the move class applied
+        addClass(node, moveClass)
+        type = transition.getCssTransitionType(moveClass)
+        removeClass(node, moveClass)
+      }
+      if (moving || type === TYPE_TRANSITION) {
+        frags.forEach(frag => {
+          frag._oldPos = frag.node.getBoundingClientRect()
+        })
+        return true
+      }
+    }
+  },
+
+  /**
+   * Apply move transitions.
+   * Calculate new target positions after the move, then apply the
+   * FLIP technique to trigger CSS transforms.
+   *
+   * @param {Array<Fragment>} frags
+   */
+
+  applyMoveTransition: function (frags) {
+    frags.forEach(frag => {
+      var node = frag.node
+      var oldPos = frag._oldPos
+      if (!oldPos) return
+      if (!frag.moved) {
+        // transition busting to ensure correct bounding rect:
+        // if an element has an ongoing transition and not "reinserted",
+        // the bounding rect will not be calculated at its target position,
+        // but rather an in-transition position.
+        var p = node.parentNode
+        var next = node.nextSibling
+        p.removeChild(node)
+        p.insertBefore(node, next)
+      }
+      var newPos = node.getBoundingClientRect()
+      var dx = oldPos.left - newPos.left
+      var dy = oldPos.top - newPos.top
+      if (dx !== 0 || dy !== 0) {
+        frag.moved = true
+        node.style.transform = `translate(${ dx }px, ${ dy }px)`
+        node.style.transitionDuration = '0s'
+      } else {
+        frag.moved = false
+      }
+    })
+    queueReflow(() => {
+      frags.forEach(frag => {
+        var node = frag.node
+        var moveClass = node.__v_trans.moveClass
+        if (frag.moved) {
+          addClass(node, moveClass)
+          node.style.transform = ''
+          node.style.transitionDuration = ''
+          if (node._pendingMoveCb) {
+            off(node, transitionEndEvent, node._pendingMoveCb)
+          }
+          node._pendingMoveCb = function cb () {
+            off(node, transitionEndEvent, cb)
+            node._pendingMoveCb = null
+            removeClass(node, moveClass)
+          }
+          on(node, transitionEndEvent, node._pendingMoveCb)
+        }
+      })
+    })
   },
 
   /**

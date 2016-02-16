@@ -1,7 +1,7 @@
 var Vue = require('src')
 var _ = require('src/util')
 var transition = require('src/transition')
-var Transition = require('src/transition/transition')
+var Transition = require('src/transition/transition').default
 
 if (!_.isIE9) {
   describe('Transition', function () {

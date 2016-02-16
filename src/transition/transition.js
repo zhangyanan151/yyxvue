@@ -1,4 +1,4 @@
-import { pushJob } from './queue'
+import { queueReflow } from './queue'
 import {
   on,
   off,
@@ -13,10 +13,10 @@ import {
   warn
 } from '../util/index'
 
-const TYPE_TRANSITION = 'transition'
-const TYPE_ANIMATION = 'animation'
-const transDurationProp = transitionProp + 'Duration'
-const animDurationProp = animationProp + 'Duration'
+export const TYPE_TRANSITION = 'transition'
+export const TYPE_ANIMATION = 'animation'
+export const transDurationProp = transitionProp + 'Duration'
+export const animDurationProp = animationProp + 'Duration'
 
 /**
  * A Transition object that encapsulates the state and logic
@@ -33,6 +33,7 @@ export default function Transition (el, id, hooks, vm) {
   this.el = el
   this.enterClass = (hooks && hooks.enterClass) || id + '-enter'
   this.leaveClass = (hooks && hooks.leaveClass) || id + '-leave'
+  this.moveClass = (hooks && hooks.moveClass) || id + '-move'
   this.hooks = hooks
   this.vm = vm
   // async state
@@ -107,7 +108,7 @@ p.enter = function (op, cb) {
     return // user called done synchronously.
   }
   this.cancel = this.hooks && this.hooks.enterCancelled
-  pushJob(this.enterNextTick)
+  queueReflow(this.enterNextTick)
 }
 
 /**
@@ -204,7 +205,7 @@ p.leave = function (op, cb) {
     if (this.justEntered) {
       this.leaveDone()
     } else {
-      pushJob(this.leaveNextTick)
+      queueReflow(this.leaveNextTick)
     }
   }
 }

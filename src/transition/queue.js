@@ -9,7 +9,7 @@ let queued = false
  * @param {Function} job
  */
 
-export function pushJob (job) {
+export function queueReflow (job) {
   queue.push(job)
   if (!queued) {
     queued = true
@@ -24,13 +24,12 @@ export function pushJob (job) {
 
 function flush () {
   // Force layout
+  /* eslint-disable no-unused-vars */
   var f = document.documentElement.offsetHeight
+  /* eslint-enable no-unused-vars */
   for (var i = 0; i < queue.length; i++) {
     queue[i]()
   }
   queue = []
   queued = false
-  // dummy return, so js linters don't complain about
-  // unused variable f
-  return f
 }
