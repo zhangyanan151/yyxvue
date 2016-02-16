@@ -82,7 +82,7 @@ describe('v-for staggering transitions', function () {
     expect(el.innerHTML).toBe('')
     _.nextTick(function () {
       expect(el.children.length).toBe(1)
-      expect(el.children[0].className).toBe('stagger-transition stagger-enter')
+      expect(el.children[0].className).toBe('stagger-transition stagger-enter stagger-enter-active')
       expect(el.children[0].textContent).toBe('1')
       vm.list = [vm.list[0]] // remove second
       setTimeout(function () {
@@ -115,7 +115,7 @@ describe('v-for staggering transitions', function () {
     expect(el.innerHTML).toBe('')
     _.nextTick(function () {
       expect(el.children.length).toBe(1)
-      expect(el.children[0].className).toBe('stagger-transition stagger-enter')
+      expect(el.children[0].className).toBe('stagger-transition stagger-enter stagger-enter-active')
       expect(el.children[0].textContent).toBe('1')
       vm.list = [vm.list[2], vm.list[1], vm.list[0]] // reorder
       setTimeout(function () {
@@ -135,7 +135,7 @@ describe('v-for staggering transitions', function () {
     expect(el.innerHTML).toBe('')
     _.nextTick(function () {
       expect(el.children.length).toBe(1)
-      expect(el.children[0].className).toBe('stagger-transition stagger-enter')
+      expect(el.children[0].className).toBe('stagger-transition stagger-enter stagger-enter-active')
       expect(el.children[0].textContent).toBe('1')
       _.nextTick(function () {
         expect(el.innerHTML).toBe('<div class="stagger-transition">1</div>')
@@ -147,7 +147,7 @@ describe('v-for staggering transitions', function () {
           vm.list = []
           _.nextTick(function () {
             expect(el.children.length).toBe(2)
-            expect(el.children[0].className).toBe('stagger-transition stagger-leave')
+            expect(el.children[0].className).toBe('stagger-transition stagger-leave stagger-leave-active')
             expect(el.children[0].textContent).toBe('1')
             expect(el.children[1].className).toBe('stagger-transition')
             expect(el.children[1].textContent).toBe('2')
